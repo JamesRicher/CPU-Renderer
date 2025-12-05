@@ -1,0 +1,10 @@
+{
+    "version": 4,
+    "configurePresets": [
+        {
+            "name": "default",
+            "description": "Standard build pipeline",
+            "binaryDir": "${sourceDir}/build"
+        }
+    ]
+}
