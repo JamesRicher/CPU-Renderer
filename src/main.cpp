@@ -1,14 +1,14 @@
 #include <iostream>
 #include <cmath>
-#include <SFML/Graphics/RenderWindow.hpp>
-#include <SFML/Graphics/Image.hpp>
-#include <SFML/Window/VideoMode.hpp>
-#include <SFML/Window/Event.hpp>
 #include <SFML/System.hpp>
-#include <SFML/Graphics/Texture.hpp>
-#include <SFML/Graphics/Sprite.hpp>
+#include <SFML/Graphics.hpp>
+#include <SFML/Window.hpp>
+
+#include "mesh_parser.h"
 
 int main() {
+
+
     int width = 150;
     int height = 150;
     sf::RenderWindow window(

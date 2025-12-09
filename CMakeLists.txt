@@ -6,6 +6,7 @@ target_compile_features(CPURenderer PRIVATE cxx_std_17)
 target_sources(CPURenderer
     PRIVATE
         src/main.cpp
+        src/mesh_parser.cpp
 )
 
 add_subdirectory(external/SFML SYSTEM)

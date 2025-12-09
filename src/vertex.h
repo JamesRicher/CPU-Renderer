@@ -4,9 +4,9 @@
 #include "vector3.h"
 
 struct Vertex {
-    Vector3 position;
-    Vector3 normal;
-    Vector3 uv;
-}
+    Vector3<float> position;
+    Vector3<float> normal;
+    Vector3<float> uv;
+};
 
 #endif
