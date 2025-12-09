@@ -2,13 +2,12 @@
 #define MESH_H
 
 #include <vector>
-struct Vertex;
+#include "vertex.h"
 
 class Mesh {
 private:
-    vector<Vertex> vertices;
-    vector<
-
+    std::vector<Vertex> vertices;
+    std::vector<uint16_t> triangles; // size = 3 * tri count
 
 public:
 };

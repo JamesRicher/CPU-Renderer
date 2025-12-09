@@ -3,7 +3,7 @@
 
 #include <cmath>
 
-template <typename T>
+template <typename T = float>
 struct Vector3 {
     T x,y,z;
     

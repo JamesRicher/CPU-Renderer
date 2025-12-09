@@ -1,7 +1,7 @@
 #ifndef VERTEX_H
 #define VERTEX_H
 
-struct Vector3;
+#include "vector3.h"
 
 struct Vertex {
     Vector3 position;
