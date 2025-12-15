@@ -10,6 +10,7 @@ private:
     std::vector<uint16_t> triangles; // size = 3 * tri count
 
 public:
+    Mesh() = default;
 };
 
 #endif

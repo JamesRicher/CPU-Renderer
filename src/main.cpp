@@ -5,9 +5,15 @@
 #include <SFML/Window.hpp>
 
 #include "mesh_parser.h"
+#include "app_config.h"
 
 int main() {
+    // setup the config data
+    AppConfig config;
+    config.asset_root = std::filesystem::current_path() / "assets";
 
+    MeshParser mesh_parser(config);
+    mesh_parser.loadFromObj("cube_triangulated.obj");
 
     int width = 150;
     int height = 150;

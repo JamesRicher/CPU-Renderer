@@ -1,12 +1,20 @@
 #ifndef MESH_PARSER_H
 #define MESH_PARSER_H
 
-class Mesh;
+#include "mesh.h"
+#include "app_config.h"
+#include <filesystem>
 
-namespace MeshParser {
-    Mesh loadFromObj(const char* obj_path);
+class MeshParser {
+public:
+    MeshParser(AppConfig config);
+
+    Mesh loadFromObj(const char* obj_rel_path);
     bool saveAsJson(const Mesh& mesh, const char* json_path);
     bool saveAsBinary(const Mesh& mesh, const char* binary_path);
-}
+
+private:
+    std::filesystem::path asset_root;
+};
 
 #endif
