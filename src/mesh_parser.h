@@ -3,6 +3,7 @@
 
 #include "mesh.h"
 #include "app_config.h"
+#include "vector3.h"
 #include <filesystem>
 #include <string_view>
 #include <vector>
@@ -21,6 +22,7 @@ private:
 
 //***** UTILS *****//
 std::vector<std::string_view> split(const char* cstr);
-bool to_float(std::string_view sv, float& out);
+bool toFloat(std::string_view sv, float& out);
+Vector3<float> lineToVector3(std::vector<std::string_view> tokens);
 
 #endif
