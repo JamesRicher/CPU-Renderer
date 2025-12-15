@@ -4,6 +4,8 @@
 #include "mesh.h"
 #include "app_config.h"
 #include <filesystem>
+#include <string_view>
+#include <vector>
 
 class MeshParser {
 public:
@@ -16,5 +18,9 @@ public:
 private:
     std::filesystem::path asset_root;
 };
+
+//***** UTILS *****//
+std::vector<std::string_view> split(const char* cstr);
+bool to_float(std::string_view sv, float& out);
 
 #endif

@@ -9,6 +9,7 @@ struct Vector3 {
     
     Vector3() : x(0), y(0), z(0) {}
     Vector3(T x, T y, T z) : x(x), y(y), z(z) {}
+    Vector3(T coords[3]) : x(coords[0]), y(coords[1]), z(coords[2]) {}
 
     T magnitude() const;
     void normalise();

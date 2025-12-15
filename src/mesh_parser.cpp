@@ -2,6 +2,9 @@
 #include <fstream>
 #include <iostream>
 #include <filesystem>
+#include <string_view>
+#include <cctype>
+#include <charconv>
 
 #include "mesh_parser.h"
 #include "app_config.h"
@@ -24,13 +27,39 @@ Mesh MeshParser::loadFromObj(const char* obj_rel_path) {
         exit(1);
     }
 
+    // read in the vertex data into the three arrays
     while (obj_stream.good()) {
         char line[256];
         obj_stream.getline(line, 256);
-        std::cout << line << std::endl;
-    }
+        if (line[0] == '\0')
+            continue;
 
-    std::cout << std::filesystem::current_path().c_str() << std::endl;
+        auto tokenised_line = split(line);
+        if (tokenised_line[0] == "v") {
+            float coords[3];
+            for (int i=0; i<3; i++) {
+                to_float(tokenised_line[i+1], coords[i]);
+            }
+
+            positions.emplace_back(coords);
+        }
+        else if (tokenised_line[0] == "vn") {
+            float coords[3];
+            for (int i=0; i<3; i++) {
+                to_float(tokenised_line[i+1], coords[i]);
+            }
+
+            normals.emplace_back(coords);
+        }
+        else if (tokenised_line[0] == "vt") {
+            float coords[2];
+            for (int i=0; i<2; i++) {
+                to_float(tokenised_line[i+1], coords[i]);
+            }
+
+            texcoords.emplace_back(coords);
+        }
+    }
 
     return mesh;
 }
@@ -41,4 +70,38 @@ bool MeshParser::saveAsJson(const Mesh& mesh, const char* json_path) {
 
 bool MeshParser::saveAsBinary(const Mesh& mesh, const char* binary_path) {
     return false;
+}
+
+//***** UTILS *****//
+std::vector<std::string_view> split(const char* cstr) {
+    std::vector<std::string_view> tokens;
+    const char* start = cstr;
+
+    while (start) {
+        while(*start && std::isspace(*start)) ++start;
+
+        if (!*start) break;
+        
+        const char* end = start;
+        while (*end && !std::isspace(*end)) ++end;
+        
+        tokens.emplace_back(start, end-start);
+        start=end;
+    }
+
+    return tokens;
+}
+
+bool to_float(std::string_view sv, float& out) {
+    char* end;
+    out = std::strtof(sv.data(), &end);
+
+    if (end != sv.data() + sv.size()) {
+        std::cerr << "Parse error" << std::endl;
+        return false;
+    }
+    else {
+        std::cout << out << std::endl;
+        return true;
+    }
 }
