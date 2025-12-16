@@ -7,7 +7,7 @@
 class Mesh {
 private:
     std::vector<Vertex> vertices;
-    std::vector<uint16_t> triangles; // size = 3 * tri count
+    std::vector<uint32_t> triangles; // size = 3 * tri count
 
 public:
     Mesh() = default;

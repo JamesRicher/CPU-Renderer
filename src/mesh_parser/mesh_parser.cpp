@@ -10,6 +10,8 @@
 #include "app_config.h"
 #include "vector3.h"
 #include "mesh.h"
+#include "vertex_key.h"
+#include "vertex_key_hash.h"
 
 MeshParser::MeshParser(AppConfig config) : asset_root(config.asset_root) {}
 
@@ -52,6 +54,9 @@ Mesh MeshParser::loadFromObj(const char* obj_rel_path) {
         }
     }
 
+    // create a map to store the vertices in
+    std::unordered_map<VertexKey, uint32_t, VertexKeyHash> vertex_map;
+
     // now we have extracted the raw data, form the triangles and vertices
     obj_stream.clear();
     obj_stream.seekg(0);
@@ -63,7 +68,10 @@ Mesh MeshParser::loadFromObj(const char* obj_rel_path) {
 
         auto tokenised_line = split(line);
         if (tokenised_line[0] == "f") {
-            
+            // parse the three vertices on this line
+            for (int i=1; i<4; i++) {
+                Vector3<int> indices = extractIndices(tokenised_line[i]);
+            }
         }
     }
 
@@ -110,7 +118,19 @@ bool toFloat(std::string_view sv, float& out) {
         return false;
     }
     else {
-        std::cout << out << std::endl;
+        return true;
+    }
+}
+
+bool toInt(std::string_view sv, int& out) {
+    char* end;
+    out = std::strtoul(sv.data(), &end, 10);
+
+    if (end != sv.data() + sv.size()) {
+        std::cerr << "Parse error" << std::endl;
+        return false;
+    }
+    else {
         return true;
     }
 }
@@ -121,4 +141,30 @@ Vector3<float> lineToVector3(std::vector<std::string_view> tokens) {
         toFloat(tokens[i+1], coords[i]);
 
     return Vector3<float>(coords);
+}
+
+// extracts the three indices from a sv such as 4/11/23 and packs them in a vector3
+Vector3<int> extractIndices(std::string_view sv) {
+    const char* start = sv.data();
+    const char* end = start;
+    const char* limit = start + sv.size();
+
+    int tokens_read = 0;
+    int tokens[3];
+
+    while (end != limit && tokens_read < 3) {
+        if (*end == '/') {
+            std::string_view token(start, end-start);
+            toInt(token, tokens[tokens_read++]);
+            start = end+1;
+        }
+        end++;
+    }
+
+    if (tokens_read < 3 && start < limit) {
+        std::string_view token(start, limit-start);
+        toInt(token, tokens[tokens_read++]);
+    }
+
+    return Vector3<int>(tokens);
 }
