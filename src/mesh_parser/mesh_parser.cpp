@@ -17,22 +17,97 @@
 MeshParser::MeshParser(AppConfig config) : asset_root(config.asset_root) {}
 
 Mesh MeshParser::loadFromObj(const char* obj_rel_path) {
-    std::vector<Vector3<float>> positions;
-    std::vector<Vector3<float>> texcoords;
-    std::vector<Vector3<float>> normals;
+    std::vector<Vector3<float>> positions, normals, texcoords;
 
     // open the obj file
     std::ifstream obj_stream;
     obj_stream.open(asset_root / obj_rel_path);
     if (!obj_stream.good()) {
         std::cerr << "ERROR: problem reading the obj file supplied" << std::endl;
-        exit(1);
+        throw std::runtime_error("Failed to load OBJ");
     }
 
+    // read in the raw geometry data 
+    readVertexData(obj_stream, positions, texcoords, normals);
+
+    // create a map to store the vertices in
+    std::unordered_map<VertexKey, uint32_t, VertexKeyHash> vertex_map;
+    std::vector<Vertex> vertex_buffer;
+    std::vector<uint32_t> triangle_buffer;
+
+    // reserve memory
+    vertex_map.reserve(positions.size());
+    vertex_buffer.reserve(positions.size());
+    triangle_buffer.reserve(positions.size() * 3);
+
+    // now we have extracted the raw data, form the triangles and vertices
+    obj_stream.clear();
+    obj_stream.seekg(0);
+    char line[256];
+
+    while (obj_stream.getline(line, 256)){
+        if (line[0] == '\0')
+            continue;
+
+        auto tokenised_line = split(line);
+        if (tokenised_line[0] == "f") {
+            // parse the three vertices on this line
+            for (int i=1; i<4; i++) {
+                Vector3<int> indices = extractTokens(tokenised_line[i]);
+                VertexKey vertex_key;
+                vertex_key.pos_i = --indices.x;
+                vertex_key.tex_i = --indices.y;
+                vertex_key.norm_i = --indices.z;
+
+                // try insert the vertex in the dictionary
+                auto [it, inserted] = vertex_map.emplace(vertex_key, vertex_buffer.size()); 
+
+                if (inserted) {
+                    // construct the new vertex
+                    Vertex v;
+                    v.position = positions[vertex_key.pos_i];
+                    v.normal = normals[vertex_key.norm_i];
+                    v.uv = texcoords[vertex_key.tex_i];
+
+                    vertex_buffer.push_back(v);
+                }
+
+                triangle_buffer.push_back(it->second);
+            }
+        }
+    }
+
+    obj_stream.close();
+
+    int loop_count = 1;
+    for (int x: triangle_buffer) {
+        std::cout << x << ", ";
+        if (loop_count==0) std::cout << std::endl;
+        loop_count = (loop_count +1)% 3;
+    }
+
+    Mesh mesh(vertex_buffer, triangle_buffer);
+    return mesh;
+}
+
+bool MeshParser::saveAsJson(const Mesh& mesh, const char* json_path) {
+    return false;
+}
+
+bool MeshParser::saveAsBinary(const Mesh& mesh, const char* binary_path) {
+    return false;
+}
+
+//***** INTERNAL *****//
+void MeshParser::readVertexData(
+    std::ifstream& obj_stream,
+    std::vector<Vector3<float>>& positions,
+    std::vector<Vector3<float>>& texcoords,
+    std::vector<Vector3<float>>& normals
+) {
+    char line[256];
     // read in the vertex data into the three arrays
-    while (obj_stream.good()) {
-        char line[256];
-        obj_stream.getline(line, 256);
+    while (obj_stream.getline(line, 256)) {
         if (line[0] == '\0')
             continue;
 
@@ -51,70 +126,7 @@ Mesh MeshParser::loadFromObj(const char* obj_rel_path) {
             texcoords.emplace_back(coords);
         }
     }
-
-    // create a map to store the vertices in
-    std::unordered_map<VertexKey, uint32_t, VertexKeyHash> vertex_map;
-    std::vector<Vertex> vertex_buffer;
-    std::vector<uint32_t> triangle_buffer;
-    uint32_t unique_vertex_count = 0;
-
-    // now we have extracted the raw data, form the triangles and vertices
-    obj_stream.clear();
-    obj_stream.seekg(0);
-    while (obj_stream.good()){
-        char line[256];
-        obj_stream.getline(line, 256);
-        if (line[0] == '\0')
-            continue;
-
-        auto tokenised_line = split(line);
-        if (tokenised_line[0] == "f") {
-            // parse the three vertices on this line
-            for (int i=1; i<4; i++) {
-                Vector3<int> indices = extractTokens(tokenised_line[i]);
-                VertexKey vertex_key;
-                vertex_key.pos_i = --indices.x;
-                vertex_key.tex_i = --indices.y;
-                vertex_key.norm_i = --indices.z;
-
-                // check the map to see if we have this vertex already
-                if (vertex_map.count(vertex_key) == 0) {
-                    // construct the new vertex
-                    Vertex v;
-                    v.position = positions[vertex_key.pos_i];
-                    v.normal = normals[vertex_key.norm_i];
-                    v.uv = texcoords[vertex_key.tex_i];
-
-                    // insert it into the map
-                    vertex_map.emplace(vertex_key, unique_vertex_count);
-                    
-                    // update the triangle index buffer and vertex buffer
-                    triangle_buffer.push_back(unique_vertex_count);
-                    vertex_buffer.push_back(v);
-                    unique_vertex_count++;
-                }
-                else {
-                    // if the vertex already exists in the map
-                    int vertex_index = vertex_map.at(vertex_key);
-                    triangle_buffer.push_back(vertex_index);
-                }
-            }
-        }
-    }
-
-    Mesh mesh(vertex_buffer, triangle_buffer);
-    return mesh;
 }
-
-bool MeshParser::saveAsJson(const Mesh& mesh, const char* json_path) {
-    return false;
-}
-
-bool MeshParser::saveAsBinary(const Mesh& mesh, const char* binary_path) {
-    return false;
-}
-
-//***** INTERNAL *****//
 
 //***** UTILS *****//
 std::vector<std::string_view> split(const char* cstr) {
