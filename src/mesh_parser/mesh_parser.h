@@ -25,6 +25,6 @@ std::vector<std::string_view> split(const char* cstr);
 bool toFloat(std::string_view sv, float& out);
 bool toInt(std::string_view sv, int& out);
 Vector3<float> lineToVector3(std::vector<std::string_view> tokens);
-Vector3<int> extractIndices(std::string_view sv);
+Vector3<int> extractTokens(std::string_view sv);
 
 #endif

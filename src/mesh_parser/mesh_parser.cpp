@@ -5,6 +5,7 @@
 #include <string_view>
 #include <cctype>
 #include <charconv>
+#include <unordered_map>
 
 #include "mesh_parser.h"
 #include "app_config.h"
@@ -49,13 +50,13 @@ Mesh MeshParser::loadFromObj(const char* obj_rel_path) {
 
             texcoords.emplace_back(coords);
         }
-        else if (tokenised_line[0] == "s" || tokenised_line[0] == "f") {
-            break;
-        }
     }
 
     // create a map to store the vertices in
     std::unordered_map<VertexKey, uint32_t, VertexKeyHash> vertex_map;
+    std::vector<Vertex> vertex_buffer;
+    std::vector<uint32_t> triangle_buffer;
+    uint32_t unique_vertex_count = 0;
 
     // now we have extracted the raw data, form the triangles and vertices
     obj_stream.clear();
@@ -70,12 +71,38 @@ Mesh MeshParser::loadFromObj(const char* obj_rel_path) {
         if (tokenised_line[0] == "f") {
             // parse the three vertices on this line
             for (int i=1; i<4; i++) {
-                Vector3<int> indices = extractIndices(tokenised_line[i]);
+                Vector3<int> indices = extractTokens(tokenised_line[i]);
+                VertexKey vertex_key;
+                vertex_key.pos_i = --indices.x;
+                vertex_key.tex_i = --indices.y;
+                vertex_key.norm_i = --indices.z;
+
+                // check the map to see if we have this vertex already
+                if (vertex_map.count(vertex_key) == 0) {
+                    // construct the new vertex
+                    Vertex v;
+                    v.position = positions[vertex_key.pos_i];
+                    v.normal = normals[vertex_key.norm_i];
+                    v.uv = texcoords[vertex_key.tex_i];
+
+                    // insert it into the map
+                    vertex_map.emplace(vertex_key, unique_vertex_count);
+                    
+                    // update the triangle index buffer and vertex buffer
+                    triangle_buffer.push_back(unique_vertex_count);
+                    vertex_buffer.push_back(v);
+                    unique_vertex_count++;
+                }
+                else {
+                    // if the vertex already exists in the map
+                    int vertex_index = vertex_map.at(vertex_key);
+                    triangle_buffer.push_back(vertex_index);
+                }
             }
         }
     }
 
-    Mesh mesh;
+    Mesh mesh(vertex_buffer, triangle_buffer);
     return mesh;
 }
 
@@ -144,7 +171,7 @@ Vector3<float> lineToVector3(std::vector<std::string_view> tokens) {
 }
 
 // extracts the three indices from a sv such as 4/11/23 and packs them in a vector3
-Vector3<int> extractIndices(std::string_view sv) {
+Vector3<int> extractTokens(std::string_view sv) {
     const char* start = sv.data();
     const char* end = start;
     const char* limit = start + sv.size();

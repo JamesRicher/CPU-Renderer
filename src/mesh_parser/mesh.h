@@ -10,7 +10,9 @@ private:
     std::vector<uint32_t> triangles; // size = 3 * tri count
 
 public:
-    Mesh() = default;
+    Mesh(const std::vector<Vertex> vertices, std::vector<uint32_t> triangles) :
+        vertices(vertices),
+        triangles(triangles) {};
 };
 
 #endif

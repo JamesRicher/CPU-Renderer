@@ -2,13 +2,13 @@
 #define VERTEX_KEY_H
 
 struct VertexKey {
-    unsigned short vi, ni, ti;
+    unsigned short pos_i, norm_i, tex_i;
 
-    bool operator==(const VertexKey& other) {
+    bool operator==(const VertexKey& other) const {
         return (
-            vi == other.vi &&
-            ni == other.ni &&
-            ti == other.ti 
+            pos_i == other.pos_i &&
+            norm_i == other.norm_i &&
+            tex_i == other.tex_i 
         );
     }
 };
