@@ -14,37 +14,70 @@
 #include "vertex_key.h"
 #include "vertex_key_hash.h"
 
-MeshParser::MeshParser(AppConfig config) : asset_root(config.asset_root) {}
+//----- INTERNAL -----
+namespace {
+struct ObjData {
+    std::vector<Vector3<float>> positions;
+    std::vector<Vector3<float>> normals;
+    std::vector<Vector2<float>> texcoords;
+};
 
-Mesh MeshParser::loadFromObj(const char* obj_rel_path) {
-    std::vector<Vector3<float>> positions, normals, texcoords;
-
-    // open the obj file
-    std::ifstream obj_stream;
-    obj_stream.open(asset_root / obj_rel_path);
+static bool openObjFile(std::ifstream& obj_stream, std::filesystem::path obj_path) {
+    obj_stream.open(obj_path);
     if (!obj_stream.good()) {
         std::cerr << "ERROR: problem reading the obj file supplied" << std::endl;
-        throw std::runtime_error("Failed to load OBJ");
+        return false;
     }
 
-    // read in the raw geometry data 
-    readVertexData(obj_stream, positions, texcoords, normals);
+    return true;
+}
 
-    // create a map to store the vertices in
-    std::unordered_map<VertexKey, uint32_t, VertexKeyHash> vertex_map;
-    std::vector<Vertex> vertex_buffer;
-    std::vector<uint32_t> triangle_buffer;
+static ObjData parseObjAttributes(std::ifstream& obj_stream) {
+    ObjData obj_data;
 
-    // reserve memory
-    vertex_map.reserve(positions.size());
-    vertex_buffer.reserve(positions.size());
-    triangle_buffer.reserve(positions.size() * 3);
-
-    // now we have extracted the raw data, form the triangles and vertices
-    obj_stream.clear();
-    obj_stream.seekg(0);
     char line[256];
+    // read in the vertex data into the three arrays
+    while (obj_stream.getline(line, 256)) {
+        if (line[0] == '\0')
+            continue;
 
+        auto tokenised_line = split(line);
+        if (tokenised_line[0] == "v")
+            obj_data.positions.push_back(lineToVector3(tokenised_line));
+        else if (tokenised_line[0] == "vn") {
+            obj_data.normals.push_back(lineToVector3(tokenised_line));
+        }
+        else if (tokenised_line[0] == "vt") {
+            float coords[2];
+            for (int i=0; i<2; i++) {
+                toFloat(tokenised_line[i+1], coords[i]);
+            }
+
+            obj_data.texcoords.emplace_back(coords);
+        }
+    }
+
+    obj_data.positions.shrink_to_fit();
+    obj_data.normals.shrink_to_fit();
+    obj_data.texcoords.shrink_to_fit();
+
+    return obj_data;
+}
+
+static void parseObjFaces(
+    std::ifstream& obj_stream, 
+    const ObjData& obj_data,
+    std::vector<Vertex>& vertex_buffer,
+    std::vector<uint32_t>& triangle_buffer
+) {
+    // consruct the vertex hashmap
+    std::unordered_map<VertexKey, uint32_t, VertexKeyHash> vertex_map;
+
+    vertex_map.reserve(obj_data.positions.size() * 3);
+    vertex_buffer.reserve(obj_data.positions.size());
+    triangle_buffer.reserve(obj_data.positions.size());
+
+    char line[256];
     while (obj_stream.getline(line, 256)){
         if (line[0] == '\0')
             continue;
@@ -65,9 +98,9 @@ Mesh MeshParser::loadFromObj(const char* obj_rel_path) {
                 if (inserted) {
                     // construct the new vertex
                     Vertex v;
-                    v.position = positions[vertex_key.pos_i];
-                    v.normal = normals[vertex_key.norm_i];
-                    v.uv = texcoords[vertex_key.tex_i];
+                    v.position = obj_data.positions[vertex_key.pos_i];
+                    v.normal = obj_data.normals[vertex_key.norm_i];
+                    v.uv = obj_data.texcoords[vertex_key.tex_i];
 
                     vertex_buffer.push_back(v);
                 }
@@ -76,6 +109,28 @@ Mesh MeshParser::loadFromObj(const char* obj_rel_path) {
             }
         }
     }
+}
+}
+
+//----- MEMBERS -----
+MeshParser::MeshParser(AppConfig config) : asset_root(config.asset_root) {}
+
+Mesh MeshParser::loadFromObj(const char* obj_rel_path) {
+    // open the obj file
+    std::ifstream obj_stream;
+    openObjFile(obj_stream, asset_root / obj_rel_path);
+
+    // read in the raw geometry data 
+    ObjData obj_data = parseObjAttributes(obj_stream);
+    
+    // reset the filestream
+    obj_stream.clear();
+    obj_stream.seekg(0);
+
+    // create a map to store the vertices in
+    std::vector<Vertex> vertex_buffer;
+    std::vector<uint32_t> triangle_buffer;
+    parseObjFaces(obj_stream, obj_data, vertex_buffer, triangle_buffer);
 
     obj_stream.close();
 
@@ -96,36 +151,6 @@ bool MeshParser::saveAsJson(const Mesh& mesh, const char* json_path) {
 
 bool MeshParser::saveAsBinary(const Mesh& mesh, const char* binary_path) {
     return false;
-}
-
-//***** INTERNAL *****//
-void MeshParser::readVertexData(
-    std::ifstream& obj_stream,
-    std::vector<Vector3<float>>& positions,
-    std::vector<Vector3<float>>& texcoords,
-    std::vector<Vector3<float>>& normals
-) {
-    char line[256];
-    // read in the vertex data into the three arrays
-    while (obj_stream.getline(line, 256)) {
-        if (line[0] == '\0')
-            continue;
-
-        auto tokenised_line = split(line);
-        if (tokenised_line[0] == "v")
-            positions.push_back(lineToVector3(tokenised_line));
-        else if (tokenised_line[0] == "vn") {
-            normals.push_back(lineToVector3(tokenised_line));
-        }
-        else if (tokenised_line[0] == "vt") {
-            float coords[2];
-            for (int i=0; i<2; i++) {
-                toFloat(tokenised_line[i+1], coords[i]);
-            }
-
-            texcoords.emplace_back(coords);
-        }
-    }
 }
 
 //***** UTILS *****//

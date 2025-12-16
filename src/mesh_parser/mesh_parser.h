@@ -18,13 +18,6 @@ public:
 
 private:
     std::filesystem::path asset_root;
-
-    void readVertexData(
-        std::ifstream& obj_stream,
-        std::vector<Vector3<float>>& positions,
-        std::vector<Vector3<float>>& texcoords,
-        std::vector<Vector3<float>>& normals
-    );
 };
 
 //***** UTILS *****//
