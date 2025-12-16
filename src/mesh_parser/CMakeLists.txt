@@ -12,9 +12,10 @@ target_sources(MeshParser
             mesh_parser.h
             vertex.h
             mesh.h
+            vertex_key.h
 )
 
-target_compile_features(MeshParser PRIVATE cxx_std_17)
+target_compile_features(MeshParser PRIVATE cxx_std_20)
 
 target_include_directories(MeshParser
     PRIVATE
