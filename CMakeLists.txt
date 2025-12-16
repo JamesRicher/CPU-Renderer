@@ -6,8 +6,18 @@ target_compile_features(CPURenderer PRIVATE cxx_std_17)
 target_sources(CPURenderer
     PRIVATE
         src/main.cpp
-        src/mesh_parser.cpp
 )
 
 add_subdirectory(external/SFML SYSTEM)
-target_link_libraries(CPURenderer SFML::Graphics)
+add_subdirectory(src/mesh_parser)
+
+target_link_libraries(CPURenderer
+    PRIVATE
+        SFML::Graphics
+        MeshParser
+)
+
+target_include_directories(CPURenderer
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}/src
+)

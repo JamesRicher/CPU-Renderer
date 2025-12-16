@@ -4,7 +4,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 
-#include "mesh_parser.h"
+#include "mesh_parser/mesh_parser.h"
 #include "app_config.h"
 
 int main() {
