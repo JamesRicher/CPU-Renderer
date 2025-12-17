@@ -7,16 +7,35 @@
 #include <charconv>
 #include <unordered_map>
 #include <cassert>
+#include <nlohmann/json.hpp>
 
 #include "mesh_parser.h"
 #include "app_config.h"
 #include "vector3.h"
+#include "vector2.h"
+#include "vertex.h"
 #include "mesh.h"
 #include "vertex_key.h"
 #include "vertex_key_hash.h"
 
 //----- INTERNAL -----
 namespace {
+static bool toFloat(std::string_view sv, float& out) {
+    char* end = nullptr;
+    std::string tmp(sv);
+    out = std::strtof(tmp.c_str(), &end);
+
+    return (end == sv.data() + sv.size());
+}
+
+static bool toInt(std::string_view sv, int& out) {
+    char* end = nullptr;
+    std::string tmp(sv);
+    out = std::strtoul(tmp.c_str(), &end, 10);
+
+    return (end == sv.data() + sv.size());
+}
+
 // extracts the three indices from a sv such as 4/11/23 and packs them in a vector3
 static Vector3<int> extractTokens(std::string_view sv) {
     const char* start = sv.data();
@@ -65,22 +84,6 @@ static std::vector<std::string_view> split(const char* cstr) {
     }
 
     return tokens;
-}
-
-static bool toFloat(std::string_view sv, float& out) {
-    char* end = nullptr;
-    std::string tmp(sv);
-    out = std::strtof(tmp.c_str(), &end);
-
-    return (end == sv.data() + sv.size());
-}
-
-static bool toInt(std::string_view sv, int& out) {
-    char* end = nullptr;
-    std::string tmp(sv);
-    out = std::strtoul(tmp.c_str(), &end, 10);
-
-    return (end == sv.data() + sv.size());
 }
 
 static Vector3<float> lineToVector3(std::vector<std::string_view> tokens) {
@@ -154,8 +157,8 @@ static void parseObjFaces(
             continue;
 
         auto tokenised_line = split(line.c_str());
-        assert(tokenised_line.size() == 4);
         if (tokenised_line[0] == "f") {
+            assert(tokenised_line.size() == 4);
             // parse the three vertices on this line
             for (int i=1; i<4; i++) {
                 Vector3<int> indices = extractTokens(tokenised_line[i]);
@@ -218,10 +221,21 @@ Mesh MeshParser::loadFromObj(const char* obj_rel_path) {
     return Mesh(vertex_buffer, triangle_buffer);
 }
 
-bool MeshParser::saveAsJson(const Mesh& mesh, const char* json_path) {
-    return false;
+bool MeshParser::saveAsJson(const Mesh& mesh, const char* filename) {
+    nlohmann::json obj_json = mesh;
+    std::ofstream json_stream(asset_root / "json" / filename);
+
+    if (!json_stream.good()) return false;
+
+    json_stream << obj_json.dump(4);
+    return true;
 }
 
-bool MeshParser::saveAsBinary(const Mesh& mesh, const char* binary_path) {
-    return false;
+Mesh MeshParser::loadFromJson(const char* filename) {
+    std::ifstream json_stream(asset_root /"json"/filename);
+    nlohmann::json obj_json;
+
+    json_stream >> obj_json;
+
+    return obj_json.get<Mesh>();
 }

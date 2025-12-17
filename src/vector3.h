@@ -2,6 +2,10 @@
 #define VECTOR3_H
 
 #include <cmath>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+
 
 template <typename T = float>
 struct Vector3 {
@@ -44,6 +48,19 @@ Vector3<T> operator-(const Vector3<T>& a, const Vector3<T>& b) {
 template <typename T>
 Vector3<T> operator/(const Vector3<T>& a, T b) {
     return Vector3<T>(a.x/b, a.y/b, a.z/b);
+}
+
+// SERIALISATION
+template <typename T>
+inline void to_json(json& j, const Vector3<T>& v) {
+    j = json{{"x",v.x}, {"y",v.y}, {"z",v.z}};
+}
+
+template<typename T>
+inline void from_json(const json& j, Vector3<T>& v) {
+    j.at("x").get_to(v.x);
+    j.at("y").get_to(v.y);
+    j.at("z").get_to(v.z);
 }
 
 #endif

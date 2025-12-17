@@ -13,7 +13,9 @@ int main() {
     config.asset_root = std::filesystem::current_path() / "assets";
 
     MeshParser mesh_parser(config);
-    mesh_parser.loadFromObj("cube_triangulated.obj");
+    Mesh mesh = mesh_parser.loadFromObj("cube_triangulated.obj");
+    mesh_parser.saveAsJson(mesh, "cube_triangulated.json");
+    mesh = mesh_parser.loadFromJson("cube_triangulated.json");
 
     int width = 150;
     int height = 150;

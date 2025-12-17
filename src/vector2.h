@@ -2,6 +2,9 @@
 #define VECTOR2_H
 
 #include <cmath>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
 
 template <typename T = float>
 struct Vector2 {
@@ -44,5 +47,17 @@ template <typename T>
 Vector2<T> operator-(const Vector2<T>& a, T b) {
     return Vector2<T>(a.x-b, a.y-b);
 }
+
+template <typename T>
+inline void to_json(json& j, const Vector2<T>& v) {
+    j = json{{"x",v.x}, {"y",v.y}};
+}
+
+template<typename T>
+inline void from_json(const json& j, Vector2<T>& v) {
+    j.at("x").get_to(v.x);
+    j.at("y").get_to(v.y);
+}
+
 
 #endif

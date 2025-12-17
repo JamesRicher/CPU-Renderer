@@ -14,17 +14,11 @@ public:
 
     Mesh loadFromObj(const char* obj_rel_path);
     bool saveAsJson(const Mesh& mesh, const char* json_path);
-    bool saveAsBinary(const Mesh& mesh, const char* binary_path);
+    Mesh loadFromJson(const char* filename);
 
 private:
     std::filesystem::path asset_root;
 };
 
-//***** UTILS *****//
-std::vector<std::string_view> split(const char* cstr);
-bool toFloat(std::string_view sv, float& out);
-bool toInt(std::string_view sv, int& out);
-Vector3<float> lineToVector3(std::vector<std::string_view> tokens);
-Vector3<int> extractTokens(std::string_view sv);
 
 #endif
