@@ -6,7 +6,6 @@
 
 using json = nlohmann::json;
 
-
 template <typename T = float>
 struct Vector3 {
     T x,y,z;
@@ -17,6 +16,8 @@ struct Vector3 {
 
     T magnitude() const;
     void normalise();
+    T dot(const Vector3<T>& v) const;
+    Vector3 cross(const Vector3<T>& v) const;
 };
 
 template <typename T>
@@ -28,6 +29,19 @@ void Vector3<T>::normalise() {
     x /= mag;
     y /= mag;
     z /= mag;
+}
+
+template<typename T>
+T Vector3<T>::dot(const Vector3<T>& v) const {
+    return (x*v.x + y*v.y + z*v.z);
+}
+
+template<typename T>
+Vector3<T> Vector3<T>::cross(const Vector3<T>& v) const {
+    T new_x = y*v.z - z-v.y;
+    T new_y = z*v.x - x*v.z;
+    T new_z = x*v.y - y*v.x;
+    return Vector3<T>(new_x, new_y, new_z);
 }
 
 template <typename T>
@@ -49,6 +63,7 @@ template <typename T>
 Vector3<T> operator/(const Vector3<T>& a, T b) {
     return Vector3<T>(a.x/b, a.y/b, a.z/b);
 }
+
 
 // SERIALISATION
 template <typename T>

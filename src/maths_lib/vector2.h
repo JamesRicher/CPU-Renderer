@@ -16,6 +16,7 @@ struct Vector2 {
 
     T magnitude() const;
     void normalise();
+    T dot(const Vector2<T>& v) const;
 };
 
 template <typename T>
@@ -26,6 +27,11 @@ void Vector2<T>::normalise() {
     T mag = magnitude();
     x/=mag;
     y/=mag;
+}
+
+template<typename T>
+T Vector2<T>::dot(const Vector2<T>& v) const {
+    return Vector2<T>(x*v.x + y*v.y);
 }
 
 template <typename T>
