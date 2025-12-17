@@ -18,6 +18,9 @@ struct Vector4 {
     void normalise();
     T dot(const Vector4<T>& v) const;
     void persp_divide();
+
+    const T& operator[](int i) const;
+    T& operator[](int i);
 };
 
 template <typename T>
@@ -67,6 +70,15 @@ Vector4<T> operator/(const Vector4<T>& a, T b) {
     return Vector4<T>(a.x/b, a.y/b, a.z/b, a.w/b);
 }
 
+template<typename T>
+const T& Vector4<T>::operator[](int i) const {
+    return (&x)[i];
+}
+
+template<typename T>
+T& Vector4<T>::operator[](int i) {
+    return (&x)[i];
+}
 
 // SERIALISATION
 template <typename T>

@@ -8,6 +8,7 @@ target_sources(MathsLib
             vector3.h
             vector2.h
             vector4.h
+            matrix4.h
 )
 
 target_compile_features(MathsLib INTERFACE cxx_std_20)

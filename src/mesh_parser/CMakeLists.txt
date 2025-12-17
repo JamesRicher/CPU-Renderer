@@ -18,6 +18,6 @@ target_sources(MeshParser
 target_compile_features(MeshParser PRIVATE cxx_std_20)
 
 target_include_directories(MeshParser
-    PRIVATE
+    PUBLIC
         ${PROJECT_SOURCE_DIR}/src
 )
