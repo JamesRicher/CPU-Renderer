@@ -68,29 +68,19 @@ static std::vector<std::string_view> split(const char* cstr) {
 }
 
 static bool toFloat(std::string_view sv, float& out) {
-    char* end;
-    out = std::strtof(sv.data(), &end);
+    char* end = nullptr;
+    std::string tmp(sv);
+    out = std::strtof(tmp.c_str(), &end);
 
-    if (end != sv.data() + sv.size()) {
-        std::cerr << "Parse error" << std::endl;
-        return false;
-    }
-    else {
-        return true;
-    }
+    return (end == sv.data() + sv.size());
 }
 
 static bool toInt(std::string_view sv, int& out) {
-    char* end;
-    out = std::strtoul(sv.data(), &end, 10);
+    char* end = nullptr;
+    std::string tmp(sv);
+    out = std::strtoul(tmp.c_str(), &end, 10);
 
-    if (end != sv.data() + sv.size()) {
-        std::cerr << "Parse error" << std::endl;
-        return false;
-    }
-    else {
-        return true;
-    }
+    return (end == sv.data() + sv.size());
 }
 
 static Vector3<float> lineToVector3(std::vector<std::string_view> tokens) {
