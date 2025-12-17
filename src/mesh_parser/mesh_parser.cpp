@@ -16,6 +16,85 @@
 
 //----- INTERNAL -----
 namespace {
+// extracts the three indices from a sv such as 4/11/23 and packs them in a vector3
+static Vector3<int> extractTokens(std::string_view sv) {
+    const char* start = sv.data();
+    const char* end = start;
+    const char* limit = start + sv.size();
+
+    int tokens_read = 0;
+    int tokens[3];
+
+    while (end != limit && tokens_read < 3) {
+        if (*end == '/') {
+            std::string_view token(start, end-start);
+            toInt(token, tokens[tokens_read++]);
+            start = end+1;
+        }
+        end++;
+    }
+
+    if (tokens_read < 3 && start < limit) {
+        std::string_view token(start, limit-start);
+        toInt(token, tokens[tokens_read++]);
+    }
+
+    return Vector3<int>(tokens);
+}
+
+static std::vector<std::string_view> split(const char* cstr) {
+    std::vector<std::string_view> tokens;
+    const char* start = cstr;
+
+    while (start) {
+        while(*start && std::isspace(*start)) ++start;
+
+        if (!*start) break;
+        
+        const char* end = start;
+        while (*end && !std::isspace(*end)) ++end;
+        
+        tokens.emplace_back(start, end-start);
+        start=end;
+    }
+
+    return tokens;
+}
+
+static bool toFloat(std::string_view sv, float& out) {
+    char* end;
+    out = std::strtof(sv.data(), &end);
+
+    if (end != sv.data() + sv.size()) {
+        std::cerr << "Parse error" << std::endl;
+        return false;
+    }
+    else {
+        return true;
+    }
+}
+
+static bool toInt(std::string_view sv, int& out) {
+    char* end;
+    out = std::strtoul(sv.data(), &end, 10);
+
+    if (end != sv.data() + sv.size()) {
+        std::cerr << "Parse error" << std::endl;
+        return false;
+    }
+    else {
+        return true;
+    }
+}
+
+static Vector3<float> lineToVector3(std::vector<std::string_view> tokens) {
+    float coords[3];
+    for (int i=0; i < 3; i++)
+        toFloat(tokens[i+1], coords[i]);
+
+    return Vector3<float>(coords);
+}
+
 struct ObjData {
     std::vector<Vector3<float>> positions;
     std::vector<Vector3<float>> normals;
@@ -56,10 +135,6 @@ static ObjData parseObjAttributes(std::ifstream& obj_stream) {
             obj_data.texcoords.emplace_back(coords);
         }
     }
-
-    obj_data.positions.shrink_to_fit();
-    obj_data.normals.shrink_to_fit();
-    obj_data.texcoords.shrink_to_fit();
 
     return obj_data;
 }
@@ -110,7 +185,7 @@ static void parseObjFaces(
         }
     }
 }
-}
+} // end of anonymous namespace
 
 //----- MEMBERS -----
 MeshParser::MeshParser(AppConfig config) : asset_root(config.asset_root) {}
@@ -118,7 +193,8 @@ MeshParser::MeshParser(AppConfig config) : asset_root(config.asset_root) {}
 Mesh MeshParser::loadFromObj(const char* obj_rel_path) {
     // open the obj file
     std::ifstream obj_stream;
-    openObjFile(obj_stream, asset_root / obj_rel_path);
+    if (!openObjFile(obj_stream, asset_root / obj_rel_path))
+        throw std::runtime_error("ERROR loading obj");
 
     // read in the raw geometry data 
     ObjData obj_data = parseObjAttributes(obj_stream);
@@ -134,6 +210,7 @@ Mesh MeshParser::loadFromObj(const char* obj_rel_path) {
 
     obj_stream.close();
 
+    // DEBUG
     int loop_count = 1;
     for (int x: triangle_buffer) {
         std::cout << x << ", ";
@@ -141,8 +218,7 @@ Mesh MeshParser::loadFromObj(const char* obj_rel_path) {
         loop_count = (loop_count +1)% 3;
     }
 
-    Mesh mesh(vertex_buffer, triangle_buffer);
-    return mesh;
+    return Mesh(vertex_buffer, triangle_buffer);
 }
 
 bool MeshParser::saveAsJson(const Mesh& mesh, const char* json_path) {
@@ -151,84 +227,4 @@ bool MeshParser::saveAsJson(const Mesh& mesh, const char* json_path) {
 
 bool MeshParser::saveAsBinary(const Mesh& mesh, const char* binary_path) {
     return false;
-}
-
-//***** UTILS *****//
-std::vector<std::string_view> split(const char* cstr) {
-    std::vector<std::string_view> tokens;
-    const char* start = cstr;
-
-    while (start) {
-        while(*start && std::isspace(*start)) ++start;
-
-        if (!*start) break;
-        
-        const char* end = start;
-        while (*end && !std::isspace(*end)) ++end;
-        
-        tokens.emplace_back(start, end-start);
-        start=end;
-    }
-
-    return tokens;
-}
-
-bool toFloat(std::string_view sv, float& out) {
-    char* end;
-    out = std::strtof(sv.data(), &end);
-
-    if (end != sv.data() + sv.size()) {
-        std::cerr << "Parse error" << std::endl;
-        return false;
-    }
-    else {
-        return true;
-    }
-}
-
-bool toInt(std::string_view sv, int& out) {
-    char* end;
-    out = std::strtoul(sv.data(), &end, 10);
-
-    if (end != sv.data() + sv.size()) {
-        std::cerr << "Parse error" << std::endl;
-        return false;
-    }
-    else {
-        return true;
-    }
-}
-
-Vector3<float> lineToVector3(std::vector<std::string_view> tokens) {
-    float coords[3];
-    for (int i=0; i < 3; i++)
-        toFloat(tokens[i+1], coords[i]);
-
-    return Vector3<float>(coords);
-}
-
-// extracts the three indices from a sv such as 4/11/23 and packs them in a vector3
-Vector3<int> extractTokens(std::string_view sv) {
-    const char* start = sv.data();
-    const char* end = start;
-    const char* limit = start + sv.size();
-
-    int tokens_read = 0;
-    int tokens[3];
-
-    while (end != limit && tokens_read < 3) {
-        if (*end == '/') {
-            std::string_view token(start, end-start);
-            toInt(token, tokens[tokens_read++]);
-            start = end+1;
-        }
-        end++;
-    }
-
-    if (tokens_read < 3 && start < limit) {
-        std::string_view token(start, limit-start);
-        toInt(token, tokens[tokens_read++]);
-    }
-
-    return Vector3<int>(tokens);
 }
