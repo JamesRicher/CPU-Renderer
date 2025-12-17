@@ -6,6 +6,7 @@
 #include <cctype>
 #include <charconv>
 #include <unordered_map>
+#include <cassert>
 
 #include "mesh_parser.h"
 #include "app_config.h"
@@ -23,7 +24,7 @@ static Vector3<int> extractTokens(std::string_view sv) {
     const char* limit = start + sv.size();
 
     int tokens_read = 0;
-    int tokens[3];
+    int tokens[3] = {0,0,0};
 
     while (end != limit && tokens_read < 3) {
         if (*end == '/') {
@@ -37,6 +38,11 @@ static Vector3<int> extractTokens(std::string_view sv) {
     if (tokens_read < 3 && start < limit) {
         std::string_view token(start, limit-start);
         toInt(token, tokens[tokens_read++]);
+    }
+
+    if (tokens[0] == 0 || tokens[1] == 0 || tokens[2] == 0) {
+        std::cerr << "ERROR: wrong number of tokens for a vertex" << std::endl;
+        throw std::runtime_error("wromg number of tokens for a vertex");
     }
 
     return Vector3<int>(tokens);
@@ -114,13 +120,13 @@ static bool openObjFile(std::ifstream& obj_stream, std::filesystem::path obj_pat
 static ObjData parseObjAttributes(std::ifstream& obj_stream) {
     ObjData obj_data;
 
-    char line[256];
+    std::string line;
     // read in the vertex data into the three arrays
-    while (obj_stream.getline(line, 256)) {
+    while (std::getline(obj_stream, line)) {
         if (line[0] == '\0')
             continue;
 
-        auto tokenised_line = split(line);
+        auto tokenised_line = split(line.c_str());
         if (tokenised_line[0] == "v")
             obj_data.positions.push_back(lineToVector3(tokenised_line));
         else if (tokenised_line[0] == "vn") {
@@ -152,12 +158,13 @@ static void parseObjFaces(
     vertex_buffer.reserve(obj_data.positions.size());
     triangle_buffer.reserve(obj_data.positions.size());
 
-    char line[256];
-    while (obj_stream.getline(line, 256)){
+    std::string line;
+    while (std::getline(obj_stream, line)){
         if (line[0] == '\0')
             continue;
 
-        auto tokenised_line = split(line);
+        auto tokenised_line = split(line.c_str());
+        assert(tokenised_line.size() == 4);
         if (tokenised_line[0] == "f") {
             // parse the three vertices on this line
             for (int i=1; i<4; i++) {
