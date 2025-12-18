@@ -3,21 +3,25 @@ add_library(MeshParser)
 target_sources(MeshParser
     PRIVATE
         mesh_parser.cpp
-        mesh.cpp
+        vertex_key.h
+        vertex_key_hash.h
     
     PUBLIC
-        FILE_SET myHeaders
+        FILE_SET HEADERS
         TYPE HEADERS
         FILES
             mesh_parser.h
             vertex.h
             mesh.h
-            vertex_key.h
 )
 
-target_compile_features(MeshParser PRIVATE cxx_std_20)
+target_compile_features(MeshParser PUBLIC cxx_std_17)
 
-target_include_directories(MeshParser
+target_link_libraries(MeshParser
+    PRIVATE
+        nlohmann_json::nlohmann_json
     PUBLIC
-        ${PROJECT_SOURCE_DIR}/src
+        MathsLib
 )
+
+target_include_directories(MeshParser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
