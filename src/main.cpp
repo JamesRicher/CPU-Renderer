@@ -17,6 +17,15 @@ int main() {
     mesh_parser.saveAsJson(mesh, "cube_triangulated.json");
     mesh = mesh_parser.loadFromJson("cube_triangulated.json");
 
+    // outline of approach
+    // clear the buffers
+    // update each scene object's transform
+    // loop through scene objects and render each one
+        // get each ones MVP matrix
+        // transform each vertex to a ClipVertex obect and store in a vector
+        // keep the triangles vector const throuhgout
+        // rasterise and interpolate
+
     int width = 150;
     int height = 150;
     sf::RenderWindow window(
