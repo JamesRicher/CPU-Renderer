@@ -10,6 +10,7 @@ add_subdirectory(external/SFML SYSTEM)
 add_subdirectory(external/nlohmann_json SYSTEM)
 add_subdirectory(src/mesh_parser)
 add_subdirectory(src/maths_lib)
+add_subdirectory(src/rendering_lib)
 
 option(BUILD_CONVERT_MESH "Build an exe that turns a given obj into json form (optional)" ON)
 if(BUILD_CONVERT_MESH) 
@@ -23,10 +24,8 @@ endif()
 
 target_link_libraries(CPURenderer
     PRIVATE
-        SFML::Graphics
-        MeshParser
-        nlohmann_json::nlohmann_json
         MathsLib
+        RenderingLib
 )
 
 target_include_directories(CPURenderer

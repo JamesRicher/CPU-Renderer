@@ -47,7 +47,7 @@ void Vector4<T>::persp_divide() {
     x/=w;
     y/=w;
     z/=w;
-    w/=w;
+    w=1;
 }
 
 template <typename T>

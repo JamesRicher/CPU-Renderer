@@ -1,18 +1,20 @@
 #include <iostream>
 #include <cmath>
+#include <vector>
 
 #include "mesh_parser/mesh_parser.h"
 #include "app_config.h"
+#include "scene_object.h"
 
 int main() {
     // setup the config data
     AppConfig config;
     config.asset_root = std::filesystem::current_path() / "assets";
-
     MeshParser mesh_parser(config);
-    Mesh mesh = mesh_parser.loadFromObj("cube_triangulated.obj");
-    mesh_parser.saveAsJson(mesh, "cube_triangulated.json");
-    mesh = mesh_parser.loadFromJson("cube_triangulated.json");
+
+    std::vector<SceneObject> scene_objects;
+    Mesh cube = mesh_parser.loadFromJson("cube_triangulated.json");
+    SceneObject scene_cub = SceneObject(&cube);
 
     // outline of approach
     // clear the buffers
