@@ -16,6 +16,11 @@ if(BUILD_CONVERT_MESH)
     add_subdirectory(src/tools/convert_mesh)
 endif()
 
+option(BUILD_SFML_TEST "Build a simple exe that verifys that SFML is working as intended (optional)" ON)
+if (BUILD_SFML_TEST)
+    add_subdirectory(src/SFML_test)
+endif()
+
 target_link_libraries(CPURenderer
     PRIVATE
         SFML::Graphics
