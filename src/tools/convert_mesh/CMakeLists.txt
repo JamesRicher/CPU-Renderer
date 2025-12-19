@@ -9,3 +9,9 @@ target_link_libraries(ConvertMesh
     PRIVATE
         MeshParser
 )
+
+target_include_directories(MeshParser
+    PUBLIC 
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${PROJECT_SOURCE_DIR}/src
+)
